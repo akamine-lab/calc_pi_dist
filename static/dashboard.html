@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queue Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background-color: #10b981;
+        }
+
+        .status-indicator.disconnected {
+            background-color: #ef4444;
+            animation: none;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .results-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-header h2 {
+            color: #333;
+        }
+
+        .results-count {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .results-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-item:hover {
+            background-color: #f9fafb;
+        }
+
+        .result-item.new {
+            background-color: #ecfdf5;
+            animation: highlight 2s ease-out;
+        }
+
+        @keyframes highlight {
+            0% {
+                background-color: #d1fae5;
+            }
+
+            100% {
+                background-color: #ecfdf5;
+            }
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .result-job-id {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .result-timestamp {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .result-content {
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .pi-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .pi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .pi-header h2 {
+            color: #333;
+        }
+
+        .pi-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .pi-column {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pi-column h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .pi-grid {
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 5px;
+            max-height: 600px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            word-break: break-all;
+        }
+
+        .pi-digit {
+            display: inline;
+            padding: 2px 1px;
+            border-radius: 2px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+
+        .pi-digit.queue {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .pi-digit.inflight {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .pi-digit.result {
+            background-color: white;
+            color: black;
+            border-color: #333;
+        }
+
+        .pi-digit.empty {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+        }
+
+        .pi-decimal-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .pi-decimal-content {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 18px;
+            word-break: break-all;
+            overflow-x: auto;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .pi-correct-digit {
+            background-color: #3b82f6;
+            color: white;
+            padding: 2px 1px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <span class="status-indicator disconnected" id="statusIndicator"></span>
+                Queue Dashboard
+            </h1>
+            <div id="connectionStatus">Disconnected</div>
+        </header>
+
+        <div class="metrics">
+            <div class="metric-card">
+                <div class="metric-label">Queue Length</div>
+                <div class="metric-value" id="queueLength">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">In-Flight Jobs</div>
+                <div class="metric-value" id="inflightCount">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Decimal Digits</div>
+                <div class="metric-value" id="decimalDigits">0</div>
+            </div>
+        </div>
+
+        <div class="pi-section">
+            <div class="pi-header">
+                <h2>Pi Digits</h2>
+            </div>
+            <div class="pi-container">
+                <div class="pi-column">
+                    <h3>Hexadecimal</h3>
+                    <div class="pi-grid" id="piGrid">
+                        <div class="empty-state">Waiting for jobs...</div>
+                    </div>
+                </div>
+                <div class="pi-column">
+                    <h3>Decimal</h3>
+                    <div class="pi-grid" id="piDecimalGrid">
+                        <div class="empty-state">Waiting for digits...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pi-decimal-section">
+            <div class="pi-header">
+                <h2>Pi (Decimal)</h2>
+            </div>
+            <div class="pi-decimal-content" id="piDecimal">
+                <div class="empty-state">Waiting for digits...</div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div class="results-header">
+                <h2>Recent Results</h2>
+                <div class="results-count">
+                    <span id="resultsCount">0</span> results
+                </div>
+            </div>
+            <div class="results-list" id="resultsList">
+                <div class="empty-state">No results yet. Waiting for worker results...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/dashboard.js"></script>
+</body>
+
+</html>
