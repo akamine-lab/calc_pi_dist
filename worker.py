@@ -3,7 +3,6 @@ import math
 import requests
 from decimal import Decimal, getcontext
 
-# BASE = "https://darjeeling.tea.ie.u-ryukyu.ac.jp/os"
 BASE = "http://localhost:8099"
 S = requests.Session()
 
