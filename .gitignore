@@ -1,3 +1,6 @@
+.worker_pids
+dump.rdb
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
