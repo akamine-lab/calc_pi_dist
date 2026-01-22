@@ -12,9 +12,11 @@ class Dashboard {
             connectionStatus: document.getElementById('connectionStatus'),
             queueLength: document.getElementById('queueLength'),
             inflightCount: document.getElementById('inflightCount'),
+            decimalDigits: document.getElementById('decimalDigits'),
             resultsList: document.getElementById('resultsList'),
             resultsCount: document.getElementById('resultsCount'),
             piGrid: document.getElementById('piGrid'),
+            piDecimalGrid: document.getElementById('piDecimalGrid'),
             piDecimal: document.getElementById('piDecimal')
         };
 
@@ -264,7 +266,8 @@ class Dashboard {
 
         let decimalResult = '3.';
         let currentNumerator = numerator;
-        const digitsToShow = Math.min(hexDigits.length, maxDigits);
+        // const digitsToShow = Math.min(hexDigits.length, maxDigits);
+        const digitsToShow = maxDigits;
 
         for (let i = 0; i < digitsToShow; i++) {
             // Multiply by 10 to get next decimal digit
@@ -395,6 +398,7 @@ class Dashboard {
     renderPiDigits() {
         if (this.maxDigit < 0) {
             this.elements.piGrid.innerHTML = '<div class="empty-state">Waiting for jobs...</div>';
+            this.elements.piDecimalGrid.innerHTML = '<div class="empty-state">Waiting for digits...</div>';
             this.elements.piDecimal.innerHTML = '<div class="empty-state">Waiting for digits...</div>';
             return;
         }
@@ -427,7 +431,9 @@ class Dashboard {
         const hexString = this.getAllHexDigits();
 
         if (hexString.length === 0) {
+            this.elements.piDecimalGrid.innerHTML = '<div class="empty-state">Waiting for digits...</div>';
             this.elements.piDecimal.innerHTML = '<div class="empty-state">Waiting for digits...</div>';
+            this.elements.decimalDigits.textContent = '0';
             return;
         }
 
@@ -437,7 +443,21 @@ class Dashboard {
         const maxDecimalDigits = Math.min(Math.max(1000, Math.ceil(hexString.length * 1.5)), 10000);
         const decimalString = this.hexFractionToDecimal(hexString, maxDecimalDigits);
 
-        // If we have correct Pi, highlight correct digits
+        // Count decimal digits (excluding "3.")
+        const decimalDigitCount = decimalString.length > 2 ? decimalString.length - 2 : 0;
+        this.elements.decimalDigits.textContent = decimalDigitCount.toLocaleString();
+
+        // Render decimal digits in grid format (similar to hex)
+        // For decimal, we show all calculated digits
+        const decimalDigitsArray = decimalString.substring(2).split(''); // Remove "3."
+        const decimalHtml = decimalDigitsArray.map((digit) => {
+            // Decimal digits are shown as calculated (result state)
+            return `<span class="pi-digit result">${this.escapeHtml(digit)}</span>`;
+        }).join('');
+
+        this.elements.piDecimalGrid.innerHTML = decimalHtml || '<div class="empty-state">Waiting for digits...</div>';
+
+        // If we have correct Pi, highlight correct digits (for the bottom section)
         if (this.correctPi) {
             let html = '';
             for (let i = 0; i < decimalString.length; i++) {

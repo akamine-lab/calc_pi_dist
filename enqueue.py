@@ -3,6 +3,7 @@
 複数のbbp_hexジョブをエンキューするスクリプト
 """
 import argparse
+import random
 import sys
 import requests
 
@@ -34,6 +35,11 @@ def main():
         default="http://localhost:8099",
         help="サーバーのベースURL（デフォルト: http://localhost:8099）"
     )
+    parser.add_argument(
+        "--randomize",
+        action="store_true",
+        help="エンキューの順序をランダマイズします"
+    )
     
     args = parser.parse_args()
     
@@ -56,9 +62,15 @@ def main():
     success_count = 0
     fail_count = 0
     
-    print(f"Enqueueing {args.count} jobs (start={args.start}, digits={args.digits})...")
+    # エンキューする順序を決定
+    job_indices = list(range(args.count))
+    if args.randomize:
+        random.shuffle(job_indices)
+        print(f"Enqueueing {args.count} jobs (start={args.start}, digits={args.digits}, randomized)...")
+    else:
+        print(f"Enqueueing {args.count} jobs (start={args.start}, digits={args.digits})...")
     
-    for i in range(args.count):
+    for job_num, i in enumerate(job_indices, 1):
         start_pos = args.start + i*args.digits
         payload = {
             "type": "bbp_hex",
@@ -70,10 +82,10 @@ def main():
             response = session.post(enqueue_url, json=payload, timeout=10)
             response.raise_for_status()
             success_count += 1
-            print(f"  ✓ Job {i+1}/{args.count}: start={start_pos}, count={args.digits}")
+            print(f"  ✓ Job {job_num}/{args.count}: start={start_pos}, count={args.digits}")
         except requests.exceptions.RequestException as e:
             fail_count += 1
-            print(f"  ✗ Job {i+1}/{args.count}: start={start_pos}, count={args.digits} - Error: {e}", file=sys.stderr)
+            print(f"  ✗ Job {job_num}/{args.count}: start={start_pos}, count={args.digits} - Error: {e}", file=sys.stderr)
     
     print(f"\nCompleted: {success_count} succeeded, {fail_count} failed")
     
